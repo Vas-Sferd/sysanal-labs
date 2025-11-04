@@ -1,0 +1,55 @@
+[gd_scene load_steps=3 format=3 uid="uid://bf0xwgt60bjld"]
+
+[ext_resource type="Script" uid="uid://cboppa7obn2fq" path="res://scripts/lab_1.gd" id="1_2b3re"]
+[ext_resource type="Script" uid="uid://buk1mt8m2blx1" path="res://scripts/matrix_table.gd" id="2_wuo6x"]
+
+[node name="Lab1" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("1_2b3re")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="ControlButtons" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="AddRowButton" type="Button" parent="VBoxContainer/ControlButtons"]
+layout_mode = 2
+
+[node name="RemoveRowButton" type="Button" parent="VBoxContainer/ControlButtons"]
+layout_mode = 2
+
+[node name="Button" type="Button" parent="VBoxContainer/ControlButtons"]
+layout_mode = 2
+
+[node name="Button2" type="Button" parent="VBoxContainer/ControlButtons"]
+layout_mode = 2
+
+[node name="LockEditCheckbox" type="CheckBox" parent="VBoxContainer/ControlButtons"]
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="IncidencePanel" type="Panel" parent="VBoxContainer/HBoxContainer"]
+layout_mode = 2
+
+[node name="GridContainer" type="GridContainer" parent="VBoxContainer/HBoxContainer/IncidencePanel"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("2_wuo6x")
+
+[node name="AdjacencyPanel" type="Panel" parent="VBoxContainer/HBoxContainer"]
+layout_mode = 2
+
+[node name="GridContainer" type="GridContainer" parent="VBoxContainer/HBoxContainer/AdjacencyPanel"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("2_wuo6x")
