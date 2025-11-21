@@ -8,24 +8,24 @@ extends GridContainer
 @export var locked: bool = false
 @export var has_column_headers: bool = false
 @export var column_header_prefix: String = "Column "
-@export var initial_rows: int = 0
-@export var initial_columns: int = 0
+@export var initial_rows: int = 1
+@export var initial_columns: int = 1
 
-var rows: int = 0
-var _columns: int = 0
+@onready var rows: int = initial_rows
+
 var headers: Array[Label] = []
 var cells: Array[Array] = []
 
 func _ready() -> void:
 	rows = initial_rows
-	_columns = initial_columns
+	columns = initial_columns
 	init_cells()
 	
 func init_cells() -> void:
 	cells = []
 	for r: int in range(rows):
 		var row_arr: Array[Control] = []
-		for c: int in range(_columns):
+		for c: int in range(columns):
 			row_arr.append(create_cell("0"))
 		cells.append(row_arr)
 	_rebuild_grid()
@@ -59,7 +59,7 @@ func add_row() -> void:
 	if editable and locked:
 		return  # Cannot add if locked
 	var new_row: Array[Control] = []
-	for c: int in range(_columns):
+	for c: int in range(columns):
 		new_row.append(create_cell("0"))
 	cells.append(new_row)
 	rows += 1
@@ -77,15 +77,15 @@ func add_column() -> void:
 		return
 	for row: Array[Control] in cells:
 		row.append(create_cell("0"))
-	_columns += 1
+	columns += 1
 	_rebuild_grid()
 
 func remove_column() -> void:
-	if _columns <= 0 or (editable and locked):
+	if columns <= 0 or (editable and locked):
 		return
 	for row: Array[Control] in cells:
 		row.pop_back()
-	_columns -= 1
+	columns -= 1
 	_rebuild_grid()
 
 func _rebuild_grid() -> void:
@@ -94,17 +94,15 @@ func _rebuild_grid() -> void:
 	
 	headers = []
 	if has_column_headers:
-		for c: int in range(_columns):
+		for c: int in range(columns):
 			var label: Label = Label.new()
 			label.text = column_header_prefix + str(c + 1)
 			add_child(label)
 			headers.append(label)
 	
 	for r: int in range(rows):
-		for c: int in range(_columns):
+		for c: int in range(columns):
 			add_child(cells[r][c])
-	
-	self._columns = _columns  # Set GridContainer _columns
 
 func get_data() -> Array[Array]:
 	var data: Array[Array] = []
@@ -129,10 +127,10 @@ func resize(new_rows: int, new_columns: int) -> void:
 	# For output tables, reset cells to new size with defaults
 	cells = []
 	rows = new_rows
-	_columns = new_columns
+	columns = new_columns
 	for r: int in range(rows):
 		var row_arr: Array[Control] = []
-		for c: int in range(_columns):
+		for c: int in range(columns):
 			row_arr.append(create_cell("0"))
 		cells.append(row_arr)
 	_rebuild_grid()

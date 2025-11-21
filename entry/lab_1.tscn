@@ -4,52 +4,87 @@
 [ext_resource type="Script" uid="uid://buk1mt8m2blx1" path="res://scripts/matrix_table.gd" id="2_wuo6x"]
 
 [node name="Lab1" type="Control"]
+layout_direction = 2
 layout_mode = 3
 anchors_preset = 0
-offset_right = 40.0
-offset_bottom = 40.0
+offset_right = 1154.0
+offset_bottom = 648.0
 script = ExtResource("1_2b3re")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
+custom_minimum_size = Vector2(1154, 648)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="ControlButtons" type="HBoxContainer" parent="VBoxContainer"]
 layout_mode = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 0.1
+alignment = 1
 
 [node name="AddRowButton" type="Button" parent="VBoxContainer/ControlButtons"]
 layout_mode = 2
+size_flags_horizontal = 3
+text = "Добавить строку"
 
 [node name="RemoveRowButton" type="Button" parent="VBoxContainer/ControlButtons"]
 layout_mode = 2
+size_flags_horizontal = 3
+text = "Удалить строку"
 
-[node name="Button" type="Button" parent="VBoxContainer/ControlButtons"]
+[node name="AddColumnButton" type="Button" parent="VBoxContainer/ControlButtons"]
 layout_mode = 2
+size_flags_horizontal = 3
+text = "Добавить колонку"
 
-[node name="Button2" type="Button" parent="VBoxContainer/ControlButtons"]
+[node name="RemoveColumnButton" type="Button" parent="VBoxContainer/ControlButtons"]
 layout_mode = 2
+size_flags_horizontal = 3
+text = "Убрать колонку"
+
+[node name="ConvertButton" type="Button" parent="VBoxContainer/ControlButtons"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Конвертировать"
 
 [node name="LockEditCheckbox" type="CheckBox" parent="VBoxContainer/ControlButtons"]
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.5
+text = "Редактирование"
 
 [node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer"]
 layout_mode = 2
+size_flags_vertical = 3
 
 [node name="IncidencePanel" type="Panel" parent="VBoxContainer/HBoxContainer"]
 layout_mode = 2
+size_flags_horizontal = 3
 
-[node name="GridContainer" type="GridContainer" parent="VBoxContainer/HBoxContainer/IncidencePanel"]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
+[node name="IncidenceTable" type="GridContainer" parent="VBoxContainer/HBoxContainer/IncidencePanel"]
+z_index = 1
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("2_wuo6x")
 
 [node name="AdjacencyPanel" type="Panel" parent="VBoxContainer/HBoxContainer"]
 layout_mode = 2
+size_flags_horizontal = 3
 
-[node name="GridContainer" type="GridContainer" parent="VBoxContainer/HBoxContainer/AdjacencyPanel"]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
+[node name="AdjacencyTable" type="GridContainer" parent="VBoxContainer/HBoxContainer/AdjacencyPanel"]
+z_index = 1
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("2_wuo6x")
