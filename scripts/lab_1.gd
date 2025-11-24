@@ -42,7 +42,7 @@ func _on_convert_pressed() -> void:
 		return
 	
 	# Compute adjacency matrix (undirected graph, no loops/multiedges)
-	var adjacency: Array = []
+	var adjacency: Array[Array] = []
 	for i: int in range(num_vertices):
 		var adj_row: Array[int] = []
 		for j: int in range(num_vertices):
