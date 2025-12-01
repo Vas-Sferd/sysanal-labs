@@ -3,6 +3,7 @@
 
 extends Control
 
+@onready var incidence_set: IncidenceSet = $VBoxContainer/HBoxContainer/IncidencePanel2/IncidenceSet
 @onready var incidence_table: MatrixTable = $VBoxContainer/HBoxContainer/IncidencePanel/IncidenceTable
 @onready var adjacency_table: MatrixTable = $VBoxContainer/HBoxContainer/AdjacencyPanel/AdjacencyTable
 @onready var add_row_button: Button = $VBoxContainer/ControlButtons/AddRowButton
@@ -33,7 +34,7 @@ func _on_remove_column_pressed() -> void:
 	incidence_table.remove_column()
 
 func _on_lock_edit_toggled(button_pressed: bool) -> void:
-	incidence_table.set_locked(button_pressed)
+	incidence_table.set_editable(!button_pressed)
 
 func _on_convert_pressed() -> void:
 	var incidence: Array = incidence_table.get_data()

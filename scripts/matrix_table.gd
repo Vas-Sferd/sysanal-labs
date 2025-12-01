@@ -5,7 +5,6 @@ class_name MatrixTable
 extends GridContainer
 
 @export var editable: bool = true
-@export var locked: bool = false
 @export var has_column_headers: bool = false
 @export var column_header_prefix: String = "Column "
 @export var initial_rows: int = 1
@@ -34,8 +33,8 @@ func create_cell(text: String) -> Control:
 	if editable:
 		var le: LineEdit = LineEdit.new()
 		le.text = text
-		le.editable = not locked
 		le.text_changed.connect(_on_cell_text_changed.bind(le))
+		le.focus_exited.connect(_on_cell_focus_exited.bind(le))
 		return le
 	else:
 		var lb: Label = Label.new()
@@ -43,21 +42,22 @@ func create_cell(text: String) -> Control:
 		return lb
 
 func _on_cell_text_changed(new_text: String, le: LineEdit) -> void:
-	if new_text not in ["0", "1", ""]:
+	if new_text not in ["0", "1", "", "-", "-1"]:
 		le.text = "0"
 		le.caret_column = len(le.text)
 
-func set_locked(value: bool) -> void:
-	locked = value
-	if editable:
-		for row: Array[Control] in cells:
-			for cell: Control in row:
-				if cell is LineEdit:
-					cell.editable = not locked
+func _on_cell_focus_exited(le: LineEdit) -> void:
+	if le.text in ["", "-"]:
+		le.text = "0"
+
+func set_editable(value: bool) -> void:
+	editable = value
+	for row: Array[Control] in cells:
+		for cell: Control in row:
+			if cell is LineEdit:
+				cell.editable = editable
 
 func add_row() -> void:
-	if editable and locked:
-		return  # Cannot add if locked
 	var new_row: Array[Control] = []
 	for c: int in range(columns):
 		new_row.append(create_cell("0"))
@@ -66,14 +66,14 @@ func add_row() -> void:
 	_rebuild_grid()
 
 func remove_row() -> void:
-	if rows <= 0 or (editable and locked):
+	if rows <= 0 or not editable:
 		return
 	cells.pop_back()
 	rows -= 1
 	_rebuild_grid()
 
 func add_column() -> void:
-	if editable and locked:
+	if not editable:
 		return
 	for row: Array[Control] in cells:
 		row.append(create_cell("0"))
@@ -81,7 +81,7 @@ func add_column() -> void:
 	_rebuild_grid()
 
 func remove_column() -> void:
-	if columns <= 0 or (editable and locked):
+	if columns <= 0 or not editable:
 		return
 	for row: Array[Control] in cells:
 		row.pop_back()

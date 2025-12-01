@@ -4,180 +4,201 @@
 class_name IncidenceSet
 extends VBoxContainer
 
-@export var is_out_mode: bool = true
-@export var locked: bool = false
 @export var initial_vertices: int = 3
+@export var locked: bool = false
 
 var num_vertices: int = 0
-var row_containers: Array[HBoxContainer] = []
+var is_outgoing: bool = true
+var out_neighbors: Array[Array] = []
+var rows: Array[HBoxContainer] = []
 
 func _ready() -> void:
 	num_vertices = initial_vertices
-	init_rows()
-
-func init_rows() -> void:
 	for i: int in range(num_vertices):
-		add_row()
-
-func create_option_button() -> OptionButton:
-	var ob: OptionButton = OptionButton.new()
-	populate_options(ob)
-	ob.disabled = locked
-	ob.item_selected.connect(_on_item_selected.bind(ob))
-	return ob
-
-func populate_options(ob: OptionButton) -> void:
-	ob.clear()
-	for k: int in range(1, num_vertices + 1):
-		ob.add_item(str(k))
-
-func _on_item_selected(index: int, ob: OptionButton) -> void:
-	var row_index: int = row_containers.find(ob.get_parent().get_parent())  # HBox combos -> HBox row
-	var self_vertex: int = row_index + 1
-	var selected_vertex: int = index + 1 if index >= 0 else 0
-	if selected_vertex == self_vertex:
-		ob.select(-1)  # No loops allowed
-
-func add_row() -> void:
-	if locked:
-		return
-	# Update existing options first to include new vertex
-	num_vertices += 1
-	update_all_options(num_vertices)
-	
-	# Create new row
-	var row_hbox: HBoxContainer = HBoxContainer.new()
-	add_child(row_hbox)
-	row_containers.append(row_hbox)
-	
-	var add_button: Button = Button.new()
-	add_button.text = "+"
-	add_button.disabled = locked
-	add_button.pressed.connect(_on_add_combo_pressed.bind(row_hbox))
-	row_hbox.add_child(add_button)
-	
-	var remove_button: Button = Button.new()
-	remove_button.text = "-"
-	remove_button.disabled = locked
-	remove_button.pressed.connect(_on_remove_combo_pressed.bind(row_hbox))
-	row_hbox.add_child(remove_button)
-	
-	var label: Label = Label.new()
-	label.text = get_label_text(row_containers.size())
-	row_hbox.add_child(label)
-	
-	var eq_label: Label = Label.new()
-	eq_label.text = "="
-	row_hbox.add_child(eq_label)
-	
-	var combos_container: HBoxContainer = HBoxContainer.new()
-	row_hbox.add_child(combos_container)
-	
-	# Initially empty
-
-func remove_row() -> void:
-	if num_vertices <= 0 or locked:
-		return
-	# Remove last row
-	var last_row: HBoxContainer = row_containers.pop_back()
-	remove_child(last_row)
-	last_row.queue_free()
-	
-	# Update options and remove invalid selections
-	num_vertices -= 1
-	update_all_options(num_vertices)
-
-func update_all_options(new_n: int) -> void:
-	for row: HBoxContainer in row_containers:
-		var combos_container: HBoxContainer = row.get_child(4) as HBoxContainer  # Index 4: combos
-		var to_remove: Array[OptionButton] = []
-		for child: Node in combos_container.get_children():
-			var ob: OptionButton = child as OptionButton
-			var selected_val: int = int(ob.text) if ob.selected_index >= 0 else 0
-			populate_options(ob)
-			if selected_val > new_n:
-				to_remove.append(ob)
-			elif selected_val > 0:
-				ob.select(selected_val - 1)
-		for ob: OptionButton in to_remove:
-			combos_container.remove_child(ob)
-			ob.queue_free()
-
-func _on_add_combo_pressed(row_hbox: HBoxContainer) -> void:
-	if locked:
-		return
-	var combos_container: HBoxContainer = row_hbox.get_child(4) as HBoxContainer
-	var ob: OptionButton = create_option_button()
-	combos_container.add_child(ob)
-
-func _on_remove_combo_pressed(row_hbox: HBoxContainer) -> void:
-	if locked:
-		return
-	var combos_container: HBoxContainer = row_hbox.get_child(4) as HBoxContainer
-	var child_count: int = combos_container.get_child_count()
-	if child_count > 0:
-		var last_ob: OptionButton = combos_container.get_child(child_count - 1) as OptionButton
-		combos_container.remove_child(last_ob)
-		last_ob.queue_free()
-
-func get_label_text(row_num: int) -> String:
-	var prefix: String = "G+" if is_out_mode else "G-"
-	return prefix + "(" + str(row_num) + ")"
-
-func update_labels() -> void:
-	for i: int in range(row_containers.size()):
-		var row: HBoxContainer = row_containers[i]
-		var label: Label = row.get_child(2) as Label
-		label.text = get_label_text(i + 1)
+		out_neighbors.append([])
+		_add_row(i)
+	_update_lock_state()
 
 func set_locked(value: bool) -> void:
 	locked = value
-	for row: HBoxContainer in row_containers:
-		var add_button: Button = row.get_child(0) as Button
-		var remove_button: Button = row.get_child(1) as Button
-		add_button.disabled = locked
-		remove_button.disabled = locked
-		var combos_container: HBoxContainer = row.get_child(4) as HBoxContainer
-		for child: Node in combos_container.get_children():
-			var ob: OptionButton = child as OptionButton
+	_update_lock_state()
+
+func _update_lock_state() -> void:
+	for row: HBoxContainer in rows:
+		row.get_child(0).disabled = locked  # +
+		row.get_child(1).disabled = locked  # -
+		var container: HBoxContainer = row.get_node("ComboContainer")
+		for ob: OptionButton in container.get_children():
 			ob.disabled = locked
 
-func switch_mode() -> void:
+func set_is_outgoing(value: bool) -> void:
+	if value != is_outgoing:
+		is_outgoing = value
+		for i: int in range(num_vertices):
+			_update_label(rows[i].get_node("Label"), i)
+			_rebuild_row(i)
+
+func add_vertex() -> void:
 	if locked:
-		return  # Perhaps allow switch even if locked? But for now, prevent if locked
-	var current_data: Array[Array] = get_data()
-	var inverted: Array[Array] = []
-	for _j: int in range(num_vertices):
-		inverted.append([])
-	for i: int in range(num_vertices):
-		for neigh: int in current_data[i]:
-			inverted[neigh - 1].append(i + 1)
-	is_out_mode = !is_out_mode
-	set_data(inverted)
-	update_labels()
-
-func get_data() -> Array[Array]:
-	var data: Array[Array] = []
-	for row: HBoxContainer in row_containers:
-		var row_data: Array[int] = []
-		var combos_container: HBoxContainer = row.get_child(4) as HBoxContainer
-		for child: Node in combos_container.get_children():
-			var ob: OptionButton = child as OptionButton
-			if ob.selected_index >= 0:
-				row_data.append(int(ob.text))
-		data.append(row_data)
-	return data
-
-func set_data(data: Array[Array]) -> void:
-	if data.size() != num_vertices:
 		return
+	num_vertices += 1
+	out_neighbors.append([])
+	_add_row(num_vertices - 1)
+	_update_all_items()
+
+func remove_vertex() -> void:
+	if num_vertices <= 0 or locked:
+		return
+	var deleted: int = num_vertices - 1
+	for u: int in range(num_vertices):
+		out_neighbors[u] = out_neighbors[u].filter(func(n: int) -> bool: return n != deleted)
+	out_neighbors.pop_back()
+	rows.back().queue_free()
+	rows.pop_back()
+	num_vertices -= 1
+	_update_all_items()
+
+func _add_row(idx: int) -> void:
+	var hbox: HBoxContainer = HBoxContainer.new()
+	var plus: Button = Button.new()
+	plus.text = "+"
+	plus.pressed.connect(_on_plus_pressed.bind(idx))
+	hbox.add_child(plus)
+	var minus: Button = Button.new()
+	minus.text = "-"
+	minus.pressed.connect(_on_minus_pressed.bind(idx))
+	hbox.add_child(minus)
+	var label: Label = Label.new()
+	label.name = "Label"
+	_update_label(label, idx)
+	hbox.add_child(label)
+	var eq: Label = Label.new()
+	eq.text = "="
+	hbox.add_child(eq)
+	var combo_container: HBoxContainer = HBoxContainer.new()
+	combo_container.name = "ComboContainer"
+	hbox.add_child(combo_container)
+	add_child(hbox)
+	rows.append(hbox)
+
+func _update_label(label: Label, idx: int) -> void:
+	var prefix: String = "G+" if is_outgoing else "G-"
+	label.text = prefix + "(" + str(idx + 1) + ")"
+
+func _rebuild_row(idx: int) -> void:
+	var container: HBoxContainer = rows[idx].get_node("ComboContainer")
+	for child: Node in container.get_children():
+		child.queue_free()
+	var neighbors: Array[int] = []
+	if is_outgoing:
+		neighbors.assign(out_neighbors[idx])
+	else:
+		for u: int in range(num_vertices):
+			if idx in out_neighbors[u]:
+				neighbors.append(u)
+	neighbors.sort()
+	for neigh: int in neighbors:
+		var ob: OptionButton = _create_option_button(idx, neigh)
+		container.add_child(ob)
+
+func _create_option_button(vertex: int, selected_val: int) -> OptionButton:
+	var ob: OptionButton = OptionButton.new()
+	ob.disabled = locked
+	_update_items(ob, vertex)
+	var sel_index: int = -1
+	for ii: int in range(ob.item_count):
+		if int(ob.get_item_text(ii)) == selected_val + 1:
+			sel_index = ii
+			break
+	ob.selected = sel_index
+	ob.set_meta("last_valid", sel_index)
+	ob.item_selected.connect(_on_item_selected.bind(vertex, ob))
+	return ob
+
+func _update_items(ob: OptionButton, vertex: int) -> void:
+	ob.clear()
+	for j: int in range(1, num_vertices + 1):
+		if j != vertex + 1:
+			ob.add_item(str(j))
+
+func _on_plus_pressed(vertex: int) -> void:
+	var container: HBoxContainer = rows[vertex].get_node("ComboContainer")
+	var ob: OptionButton = OptionButton.new()
+	ob.disabled = locked
+	_update_items(ob, vertex)
+	ob.selected = -1
+	ob.set_meta("last_valid", -1)
+	ob.item_selected.connect(_on_item_selected.bind(vertex, ob))
+	container.add_child(ob)
+
+func _on_minus_pressed(vertex: int) -> void:
+	var container: HBoxContainer = rows[vertex].get_node("ComboContainer")
+	if container.get_child_count() > 0:
+		var last: OptionButton = container.get_child(-1) as OptionButton
+		if last.selected >= 0:
+			var val: int = int(last.get_item_text(last.selected)) - 1
+			if is_outgoing:
+				out_neighbors[vertex].erase(val)
+			else:
+				out_neighbors[val].erase(vertex)
+		last.queue_free()
+
+func _on_item_selected(index: int, vertex: int, ob: OptionButton) -> void:
+	var new_val: int = int(ob.get_item_text(index)) - 1
+	# Check for duplicates
+	var val_counts: Dictionary = {}
+	var container: HBoxContainer = rows[vertex].get_node("ComboContainer")
+	for child: OptionButton in container.get_children():
+		if child.selected >= 0:
+			var v: int = int(child.get_item_text(child.selected))
+			if not val_counts.has(v):
+				val_counts[v] = 0
+			val_counts[v] += 1
+	var is_duplicate: bool = false
+	for count: int in val_counts.values():
+		if count > 1:
+			is_duplicate = true
+			break
+	if is_duplicate:
+		ob.selected = ob.get_meta("last_valid")
+		return
+	# Update data
+	var old_index: int = ob.get_meta("last_valid")
+	var from_v: int
+	var to_v: int
+	if old_index >= 0:
+		var old_val: int = int(ob.get_item_text(old_index)) - 1
+		if is_outgoing:
+			from_v = vertex
+			to_v = old_val
+		else:
+			from_v = old_val
+			to_v = vertex
+		out_neighbors[from_v].erase(to_v)
+	if is_outgoing:
+		from_v = vertex
+		to_v = new_val
+	else:
+		from_v = new_val
+		to_v = vertex
+	out_neighbors[from_v].append(to_v)
+	out_neighbors[from_v].sort()  # Optional, for consistency
+	ob.set_meta("last_valid", index)
+
+func _update_all_items() -> void:
 	for i: int in range(num_vertices):
-		var row: HBoxContainer = row_containers[i]
-		var combos_container: HBoxContainer = row.get_child(4) as HBoxContainer
-		for child: Node in combos_container.get_children():
-			combos_container.remove_child(child)
-			child.queue_free()
-		for neigh: int in data[i]:
-			var ob: OptionButton = create_option_button()
-			ob.select(neigh - 1)
-			combos_container.add_child(ob)
+		var container: HBoxContainer = rows[i].get_node("ComboContainer")
+		for ob: OptionButton in container.get_children():
+			var prev_selected: int = ob.selected
+			var prev_val: int = -1
+			if prev_selected >= 0:
+				prev_val = int(ob.get_item_text(prev_selected)) - 1
+			_update_items(ob, i)
+			var new_index: int = -1
+			for k: int in range(ob.item_count):
+				if int(ob.get_item_text(k)) == prev_val + 1:
+					new_index = k
+					break
+			ob.selected = new_index
+			ob.set_meta("last_valid", new_index)
+			# If new_index == -1 and prev_val != -1, edge was to deleted vertex, already removed in remove_vertex

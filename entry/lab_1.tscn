@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://bf0xwgt60bjld"]
+[gd_scene load_steps=4 format=3 uid="uid://bf0xwgt60bjld"]
 
 [ext_resource type="Script" uid="uid://cboppa7obn2fq" path="res://scripts/lab_1.gd" id="1_2b3re"]
 [ext_resource type="Script" uid="uid://buk1mt8m2blx1" path="res://scripts/matrix_table.gd" id="2_wuo6x"]
+[ext_resource type="Script" uid="uid://buq7ph1edwgd3" path="res://scripts/incidence_set.gd" id="3_cigu7"]
 
 [node name="Lab1" type="Control"]
 layout_direction = 2
@@ -88,3 +89,17 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("2_wuo6x")
+
+[node name="IncidencePanel2" type="Panel" parent="VBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="IncidenceSet" type="VBoxContainer" parent="VBoxContainer/HBoxContainer/IncidencePanel2"]
+z_index = 1
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("3_cigu7")
